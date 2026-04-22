@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { authClient } from '../lib/auth-client'
-import './LoginPage.css'
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -30,35 +29,41 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <div style={{ width: 360, padding: 32, border: '1px solid #ddd', borderRadius: 8 }}>
-        <h2 style={{ marginTop: 0, marginBottom: 24 }}>Sign in</h2>
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="w-[360px] p-8 bg-white border border-gray-200 rounded-lg shadow-sm">
+        <h2 className="mt-0 mb-6 text-2xl font-semibold text-gray-900">Sign in</h2>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 4 }}>Email</label>
+          <div className="mb-4">
+            <label className="block mb-1 text-sm font-medium text-gray-700">Email</label>
             <input
               type="text"
               {...register('email')}
-              className={errors.email ? 'input-error' : undefined}
-              style={{ display: 'block', width: '100%', padding: 8, boxSizing: 'border-box', borderRadius: 4, border: `1px solid ${errors.email ? 'red' : '#ccc'}` }}
+              className={`block w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 ${
+                errors.email
+                  ? 'border-red-500 focus:ring-red-200'
+                  : 'border-gray-300 focus:ring-blue-200 focus:border-blue-500'
+              }`}
             />
-            {errors.email && <p style={{ color: 'red', margin: '4px 0 0' }}>{errors.email.message}</p>}
+            {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
           </div>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 4 }}>Password</label>
+          <div className="mb-4">
+            <label className="block mb-1 text-sm font-medium text-gray-700">Password</label>
             <input
               type="password"
               {...register('password')}
-              className={errors.password ? 'input-error' : undefined}
-              style={{ display: 'block', width: '100%', padding: 8, boxSizing: 'border-box', borderRadius: 4, border: `1px solid ${errors.password ? 'red' : '#ccc'}` }}
+              className={`block w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 ${
+                errors.password
+                  ? 'border-red-500 focus:ring-red-200'
+                  : 'border-gray-300 focus:ring-blue-200 focus:border-blue-500'
+              }`}
             />
-            {errors.password && <p style={{ color: 'red', margin: '4px 0 0' }}>{errors.password.message}</p>}
+            {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
           </div>
-          {errors.root && <p style={{ color: 'red', marginBottom: 16, marginTop: 0 }}>{errors.root.message}</p>}
+          {errors.root && <p className="mb-4 text-sm text-red-600">{errors.root.message}</p>}
           <button
             type="submit"
             disabled={isSubmitting}
-            style={{ width: '100%', padding: 10, borderRadius: 4, border: 'none', background: '#0070f3', color: '#fff', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1 }}
+            className="w-full py-2.5 px-4 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {isSubmitting ? 'Signing in...' : 'Sign in'}
           </button>

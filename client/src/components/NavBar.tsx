@@ -11,13 +11,13 @@ export default function NavBar() {
   }
 
   return (
-    <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 24px', borderBottom: '1px solid #ddd', background: '#fff' }}>
-      <span style={{ fontWeight: 600 }}>Helpdesk</span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <span>{session?.user.name}</span>
+    <nav className="flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200">
+      <span className="font-semibold text-gray-900">Helpdesk</span>
+      <div className="flex items-center gap-4">
+        <span className="text-sm text-gray-600">{session?.user.name}</span>
         <button
           onClick={handleSignOut}
-          style={{ padding: '6px 14px', borderRadius: 4, border: '1px solid #ccc', background: '#fff', cursor: 'pointer' }}
+          className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
         >
           Sign out
         </button>
