@@ -1,19 +1,33 @@
-import { useEffect, useState } from 'react'
-import { Routes, Route } from 'react-router'
+import { Routes, Route, Navigate } from 'react-router'
+import { authClient } from './lib/auth-client'
+import LoginPage from './pages/LoginPage'
+import HomePage from './pages/HomePage'
+import NavBar from './components/NavBar'
+
+function ProtectedLayout() {
+  return (
+    <>
+      <NavBar />
+      <HomePage />
+    </>
+  )
+}
 
 function App() {
-  const [status, setStatus] = useState<string>('checking...')
+  const { data: session, isPending } = authClient.useSession()
 
-  useEffect(() => {
-    fetch('/api/health')
-      .then((res) => res.json())
-      .then((data) => setStatus(data.status))
-      .catch(() => setStatus('unreachable'))
-  }, [])
+  if (isPending) return null
 
   return (
     <Routes>
-      <Route path="/" element={<div>Server status: {status}</div>} />
+      <Route
+        path="/login"
+        element={session ? <Navigate to="/" replace /> : <LoginPage />}
+      />
+      <Route
+        path="/"
+        element={session ? <ProtectedLayout /> : <Navigate to="/login" replace />}
+      />
     </Routes>
   )
 }
