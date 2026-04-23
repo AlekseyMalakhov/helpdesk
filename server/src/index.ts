@@ -4,6 +4,8 @@ import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
+import { requireAuth, requireAdmin } from "./middleware/requireAuth";
+import prisma from "./prisma/client";
 export { requireAuth, requireAdmin } from "./middleware/requireAuth";
 
 if (!process.env.BETTER_AUTH_SECRET || process.env.BETTER_AUTH_SECRET.startsWith("REPLACE_WITH")) {
@@ -34,6 +36,14 @@ app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
+});
+
+app.get("/api/users", requireAuth, requireAdmin, async (_req, res) => {
+  const users = await prisma.user.findMany({
+    select: { id: true, name: true, email: true, role: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+  });
+  res.json(users);
 });
 
 app.listen(PORT, () => {
