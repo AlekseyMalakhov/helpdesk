@@ -64,10 +64,32 @@ cd server && bun db:generate                # regenerate Prisma client after sch
 - Entry point: `src/main.tsx` — mounts React with `BrowserRouter`, renders `App`
 - Routes are defined in `src/App.tsx`
 - All fetch calls use relative paths (e.g. `/api/health`); Vite proxies `/api/*` to `http://localhost:3000` in dev — no CORS issues during development
+- Path alias `@` → `./src` configured in both `vite.config.ts` and `tsconfig.json`
+- `src/lib/utils.ts` exports `cn()` helper (clsx + tailwind-merge)
 
-### Database sessions (auth)
+#### Tailwind CSS v4
 
-Sessions are stored in PostgreSQL via the `Session` model. No third-party auth library — `express-session` + `connect-pg-simple` manage the session lifecycle directly.
+Uses `@tailwindcss/vite` plugin (no `tailwind.config.js`). Theme lives in `src/index.css` as CSS variables.
+
+#### shadcn/ui
+
+Installed manually (CLI `init` is interactive and incompatible with this setup). Config at `client/components.json` (style: default, baseColor: neutral, cssVariables: true). To add components:
+
+```
+cd client && bunx --bun shadcn add <component> --yes
+```
+
+Do **not** re-run `shadcn init` — it will overwrite the existing Tailwind v4 CSS setup.
+
+### Authentication
+
+Uses **better-auth** (not express-session). Key facts:
+
+- Server: `src/lib/auth.ts` creates the `auth` instance with the Prisma adapter (PostgreSQL) and email+password strategy. **Sign-up is disabled** — only the seeded admin exists; agents are created by the admin.
+- Server entry: `app.all("/api/auth/*splat", toNodeHandler(auth))` mounts all better-auth routes under `/api/auth/`.
+- Client: `src/lib/auth-client.ts` exports `authClient = createAuthClient()`. Use `authClient.signIn.email()` to sign in and `authClient.useSession()` to read the current session in React.
+- Trusted origins are set via `TRUSTED_ORIGINS` env var (comma-separated); defaults to `http://localhost:5173`.
+- Better-auth manages its own session tables via the Prisma adapter — do not add manual session middleware.
 
 ### AI features
 

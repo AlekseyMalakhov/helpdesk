@@ -5,7 +5,10 @@
       "mcp__context7__query-docs",
       "Bash(~/.bun/bin/bun add *)",
       "Bash(~/.bun/bin/bun run *)",
-      "Bash(~/.bun/bin/bun dev *)"
+      "Bash(~/.bun/bin/bun dev *)",
+      "Bash(bun run *)",
+      "Bash(bunx --bun shadcn add button --yes)",
+      "Bash(bunx --bun shadcn add card input label form --yes)"
     ]
   }
 }
