@@ -24,7 +24,7 @@ type FormData = z.infer<typeof schema>
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const form = useForm<FormData>({ resolver: zodResolver(schema) })
+  const form = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: { email: '', password: '' } })
 
   const onSubmit = async (data: FormData) => {
     await authClient.signIn.email(data, {

@@ -12,9 +12,9 @@ const TEST_ENV = {
 };
 
 export default async function globalSetup() {
-  const env = { ...process.env, ...TEST_ENV };
+  const env = { ...process.env, ...TEST_ENV, PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION: "yes" };
 
-  execSync("bun x prisma migrate reset", {
+  execSync("bun x prisma migrate reset --force", {
     cwd: SERVER_DIR,
     env,
     stdio: "inherit",
