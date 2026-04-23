@@ -3,9 +3,16 @@ import prisma from "./client";
 
 const email = process.env.ADMIN_EMAIL;
 const password = process.env.ADMIN_PASSWORD;
+const agentEmail = process.env.AGENT_EMAIL;
+const agentPassword = process.env.AGENT_PASSWORD;
 
 if (!email || !password) {
   console.error("ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env");
+  process.exit(1);
+}
+
+if (!agentEmail || !agentPassword) {
+  console.error("AGENT_EMAIL and AGENT_PASSWORD must be set in .env");
   process.exit(1);
 }
 
@@ -42,7 +49,7 @@ async function createUser(name: string, email: string, password: string, role: "
 
 async function seed() {
   await createUser("Admin", email!, password!, "admin");
-  await createUser("Agent", "agent@example.com", "password123", "agent");
+  await createUser("Agent", agentEmail!, agentPassword!, "agent");
 }
 
 seed()
