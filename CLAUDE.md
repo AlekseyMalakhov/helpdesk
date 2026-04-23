@@ -111,19 +111,12 @@ Uses **better-auth** (not express-session). Key facts:
 - `bun db:seed` creates both the admin user (from `ADMIN_EMAIL`/`ADMIN_PASSWORD` env vars) and a fixed agent user (`agent@example.com` / `password123`).
 - Uses a shared `createUser` helper — add more seed users there.
 
+### E2E Testing
+
+Uses **Playwright** (`@playwright/test`) installed at the root. Config at `playwright.config.ts`. Tests live in `e2e/`.
+
+When writing E2E tests, always use the **`e2e-test-writer` agent** — it has full context on the test infrastructure, Playwright conventions, selector strategy, and project-specific patterns for this codebase.
+
 ### AI features
 
 Anthropic Claude API handles ticket classification, summaries, and suggested replies — all three features go through one client instance in the server.
-
-### E2E Testing
-
-Uses **Playwright** (`@playwright/test`) installed at the root. Config at `playwright.config.ts`.
-
-- Tests live in `e2e/`
-- `e2e/global-setup.ts` runs before tests: resets `helpdesk_test` (`prisma migrate reset --force`) then seeds it — test DB is always clean at the start of each run
-- Test server runs on port **3001**, test client on port **5174**
-- Test env vars in `server/.env.test` (not gitignored — contains no real secrets)
-- Rate limiting is disabled outside `NODE_ENV=production`, so tests are never blocked by the login limiter
-- `workers: 1` — tests run sequentially to avoid DB conflicts
-- Test database is wiped and re-seeded on every `bun test:e2e` run via `prisma migrate reset --force` in global setup
-- Vite proxy target is configurable via `VITE_API_URL` env var (defaults to `http://localhost:3000` for normal dev)
