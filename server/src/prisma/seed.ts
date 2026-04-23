@@ -19,10 +19,10 @@ function hashPassword(plain: string): Promise<string> {
   });
 }
 
-async function seed() {
+async function createUser(name: string, email: string, password: string, role: "admin" | "agent") {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    console.log("Admin user already exists, skipping.");
+    console.log(`${name} user already exists, skipping.`);
     return;
   }
 
@@ -30,14 +30,19 @@ async function seed() {
   const userId = crypto.randomUUID();
 
   await prisma.user.create({
-    data: { id: userId, name: "Admin", email, emailVerified: true, role: "admin" },
+    data: { id: userId, name, email, emailVerified: true, role },
   });
 
   await prisma.account.create({
     data: { id: crypto.randomUUID(), accountId: userId, providerId: "credential", userId, password: hashed },
   });
 
-  console.log(`Admin user created: ${email}`);
+  console.log(`${name} user created: ${email}`);
+}
+
+async function seed() {
+  await createUser("Admin", email!, password!, "admin");
+  await createUser("Agent", "agent@example.com", "password123", "agent");
 }
 
 seed()

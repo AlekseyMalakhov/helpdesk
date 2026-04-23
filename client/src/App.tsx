@@ -2,13 +2,14 @@ import { Routes, Route, Navigate } from 'react-router'
 import { authClient } from './lib/auth-client'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
+import UsersPage from './pages/UsersPage'
 import NavBar from './components/NavBar'
 
-function ProtectedLayout() {
+function ProtectedLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <NavBar />
-      <HomePage />
+      {children}
     </>
   )
 }
@@ -18,6 +19,8 @@ function App() {
 
   if (isPending) return null
 
+  const isAdmin = session?.user.role === 'admin'
+
   return (
     <Routes>
       <Route
@@ -26,7 +29,19 @@ function App() {
       />
       <Route
         path="/"
-        element={session ? <ProtectedLayout /> : <Navigate to="/login" replace />}
+        element={
+          session
+            ? <ProtectedLayout><HomePage /></ProtectedLayout>
+            : <Navigate to="/login" replace />
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          !session ? <Navigate to="/login" replace /> :
+          !isAdmin ? <Navigate to="/" replace /> :
+          <ProtectedLayout><UsersPage /></ProtectedLayout>
+        }
       />
     </Routes>
   )

@@ -45,7 +45,7 @@ cd client && bun dev
 ```
 docker compose up -d                        # start PostgreSQL
 cd server && bun db:migrate                 # run migrations
-cd server && bun db:seed                    # seed admin user
+cd server && bun db:seed                    # seed admin + agent users
 cd server && bun db:generate                # regenerate Prisma client after schema changes
 ```
 
@@ -86,10 +86,23 @@ Do **not** re-run `shadcn init` — it will overwrite the existing Tailwind v4 C
 Uses **better-auth** (not express-session). Key facts:
 
 - Server: `src/lib/auth.ts` creates the `auth` instance with the Prisma adapter (PostgreSQL) and email+password strategy. **Sign-up is disabled** — only the seeded admin exists; agents are created by the admin.
+- The `role` field is exposed in the session via `user.additionalFields` in `auth.ts` — without this, better-auth omits it from the session payload even though it exists in the DB.
 - Server entry: `app.all("/api/auth/*splat", toNodeHandler(auth))` mounts all better-auth routes under `/api/auth/`.
-- Client: `src/lib/auth-client.ts` exports `authClient = createAuthClient()`. Use `authClient.signIn.email()` to sign in and `authClient.useSession()` to read the current session in React.
+- Client: `src/lib/auth-client.ts` exports `authClient` with the `inferAdditionalFields<typeof auth>()` plugin (type-only import from the server) so `session.user.role` is properly typed as `"admin" | "agent"` — no casts needed. Use `authClient.signIn.email()` to sign in and `authClient.useSession()` to read the current session in React.
 - Trusted origins are set via `TRUSTED_ORIGINS` env var (comma-separated); defaults to `http://localhost:5173`.
 - Better-auth manages its own session tables via the Prisma adapter — do not add manual session middleware.
+
+#### Routing & role guards (`client/src/App.tsx`)
+
+- `ProtectedLayout` accepts a `children` prop and wraps any page with `NavBar`.
+- Unauthenticated users are redirected to `/login` from all protected routes.
+- `/users` is admin-only: non-admin authenticated users are redirected to `/`.
+- Check role with `session?.user.role === 'admin'` (typed via `inferAdditionalFields`).
+
+#### Seeding (`server/src/prisma/seed.ts`)
+
+- `bun db:seed` creates both the admin user (from `ADMIN_EMAIL`/`ADMIN_PASSWORD` env vars) and a fixed agent user (`agent@example.com` / `password123`).
+- Uses a shared `createUser` helper — add more seed users there.
 
 ### AI features
 
