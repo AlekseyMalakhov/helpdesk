@@ -43,10 +43,17 @@ cd client && bun dev
 
 **Database** (requires Docker):
 ```
-docker compose up -d                        # start PostgreSQL
+docker compose up -d                        # start PostgreSQL (port 5432) + test PostgreSQL (port 5433)
 cd server && bun db:migrate                 # run migrations
 cd server && bun db:seed                    # seed admin + agent users
 cd server && bun db:generate                # regenerate Prisma client after schema changes
+```
+
+**E2E tests** (requires Docker running):
+```
+bun test:e2e                                # run all tests headlessly
+bun test:e2e:ui                             # open Playwright UI
+bunx playwright show-report                 # view last HTML report
 ```
 
 ## Architecture
@@ -107,3 +114,16 @@ Uses **better-auth** (not express-session). Key facts:
 ### AI features
 
 Anthropic Claude API handles ticket classification, summaries, and suggested replies — all three features go through one client instance in the server.
+
+### E2E Testing
+
+Uses **Playwright** (`@playwright/test`) installed at the root. Config at `playwright.config.ts`.
+
+- Tests live in `e2e/`
+- `e2e/global-setup.ts` runs before tests: resets `helpdesk_test` (`prisma migrate reset --force`) then seeds it — test DB is always clean at the start of each run
+- Test server runs on port **3001**, test client on port **5174**
+- Test env vars in `server/.env.test` (not gitignored — contains no real secrets)
+- Rate limiting is disabled outside `NODE_ENV=production`, so tests are never blocked by the login limiter
+- `workers: 1` — tests run sequentially to avoid DB conflicts
+- Test database is wiped and re-seeded on every `bun test:e2e` run via `prisma migrate reset --force` in global setup
+- Vite proxy target is configurable via `VITE_API_URL` env var (defaults to `http://localhost:3000` for normal dev)

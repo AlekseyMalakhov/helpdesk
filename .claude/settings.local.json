@@ -8,7 +8,8 @@
       "Bash(~/.bun/bin/bun dev *)",
       "Bash(bun run *)",
       "Bash(bunx --bun shadcn add button --yes)",
-      "Bash(bunx --bun shadcn add card input label form --yes)"
+      "Bash(bunx --bun shadcn add card input label form --yes)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

@@ -19,14 +19,16 @@ app.use(helmet());
 app.use(cors({ origin: allowedOrigins, credentials: true, methods: ["GET", "POST", "PATCH", "DELETE"] }));
 app.use(express.json({ limit: "50kb" }));
 
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: "Too many login attempts, please try again later" },
-});
-app.use("/api/auth/sign-in", loginLimiter);
+if (process.env.NODE_ENV === "production") {
+  const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many login attempts, please try again later" },
+  });
+  app.use("/api/auth/sign-in", loginLimiter);
+}
 
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
