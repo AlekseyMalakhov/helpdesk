@@ -14,13 +14,21 @@ See `project-scope.md`, `tech-stack.md`, and `implementation-plan.md` for full c
 
 ## Monorepo Structure
 
-Bun workspaces monorepo. Root `package.json` declares `["client", "server"]` as workspaces.
+Bun workspaces monorepo. Root `package.json` declares `["client", "server", "core"]` as workspaces.
 
 ```
 helpdesk/
   client/   # React 19 + TypeScript + Vite 6 + React Router 7
   server/   # Express 5 + TypeScript + Prisma 6, runs on Bun
+  core/     # Shared TypeScript — Zod schemas and inferred types used by both client and server
 ```
+
+### Shared code (`core/`)
+
+- Package name: `@helpdesk/core`. Both `client` and `server` declare it as `"@helpdesk/core": "workspace:*"` in their `dependencies`.
+- No build step — both Bun (server) and Vite (client) consume the TypeScript source directly via the `exports` field in `core/package.json`.
+- **Zod schemas live here.** Whenever a route accepts a request body, define the schema in `core/src/schemas/<resource>.ts`, export it from `core/src/index.ts`, and import it in both the server route handler and the client form. This ensures the same validation rules run on both sides.
+- Inferred types (`z.infer<typeof schema>`) should be exported alongside their schemas and used in client forms (e.g. as the `useForm<T>` type parameter).
 
 ## Commands
 
@@ -65,6 +73,7 @@ bunx playwright show-report                 # view last HTML report
 - Database access goes through the Prisma client (`@prisma/client`)
 - Schema lives in `prisma/schema.prisma`; edit it then run `bun db:migrate` + `bun db:generate`
 - Env vars documented in `.env.example` — copy to `.env` before running
+- Use **Zod** (`zod`) for request body validation on all routes that accept input — define a schema above the route handler and use `.safeParse(req.body)`, returning the first error message as `{ error }` with a 400 status
 
 ### Client (`client/`)
 
@@ -78,6 +87,12 @@ bunx playwright show-report                 # view last HTML report
 
 - Use **axios** for all HTTP requests (not `fetch`). Always pass `{ withCredentials: true }` so session cookies are sent.
 - Use **TanStack Query** (`@tanstack/react-query`) for all server state. `QueryClientProvider` is set up in `main.tsx`. Use `useQuery` for reads and `useMutation` for writes — do not manage loading/error state manually with `useState` + `useEffect`.
+
+#### Forms
+
+- Use **react-hook-form** (`useForm`) with **Zod** via `zodResolver` from `@hookform/resolvers/zod` for all forms with validation.
+- Define a `z.object` schema, infer the type with `z.infer<typeof schema>`, and pass the resolver to `useForm`.
+- Use the shadcn `Form`, `FormField`, `FormItem`, `FormLabel`, `FormControl`, and `FormMessage` components to wire up fields — they integrate with react-hook-form's context automatically.
 
 #### Tailwind CSS v4
 
