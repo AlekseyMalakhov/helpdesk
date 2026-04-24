@@ -116,6 +116,23 @@ Uses **better-auth** (not express-session). Key facts:
 - `bun db:seed` creates both the admin user (from `ADMIN_EMAIL`/`ADMIN_PASSWORD` env vars) and a fixed agent user (`agent@example.com` / `password123`).
 - Uses a shared `createUser` helper — add more seed users there.
 
+### Unit Testing (client)
+
+Uses **Vitest** + **React Testing Library**. Config lives in `vite.config.ts` (`test.environment: 'jsdom'`). Setup file at `client/src/test/setup.ts` imports `@testing-library/jest-dom`.
+
+**Run tests:**
+```
+cd client && bun run test       # watch mode
+cd client && bun run test --run # single pass (CI)
+```
+
+Do **not** use `bun test` — that invokes Bun's built-in runner instead of Vitest.
+
+**Conventions:**
+- Test files live next to the component they test: `Foo.tsx` → `Foo.test.tsx`.
+- Wrap renders with `renderWithProviders()` from `@/test/render` — it sets up a fresh `QueryClient` with `retry: false`.
+- Mock axios with `vi.mock('axios')` and reset mocks in `beforeEach(() => vi.resetAllMocks())`.
+
 ### E2E Testing
 
 Uses **Playwright** (`@playwright/test`) installed at the root. Config at `playwright.config.ts`. Tests live in `e2e/`.
