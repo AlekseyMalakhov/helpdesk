@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import axios from 'axios'
 
 type Role = 'admin' | 'agent'
 
@@ -11,34 +12,24 @@ interface User {
 }
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetch('/api/users', { credentials: 'include' })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load users')
-        return res.json() as Promise<User[]>
-      })
-      .then(setUsers)
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [])
+  const { data: users = [], isPending, isError } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => axios.get<User[]>('/api/users', { withCredentials: true }).then((r) => r.data),
+  })
 
   return (
     <main className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-semibold text-gray-900 mb-6">Users</h1>
 
-      {loading && (
+      {isPending && (
         <p className="text-sm text-gray-500">Loading...</p>
       )}
 
-      {error && (
-        <p className="text-sm text-red-600">{error}</p>
+      {isError && (
+        <p className="text-sm text-red-600">Failed to load users</p>
       )}
 
-      {!loading && !error && (
+      {!isPending && !isError && (
         <div className="rounded-lg border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-600 uppercase text-xs tracking-wider">

@@ -70,9 +70,14 @@ bunx playwright show-report                 # view last HTML report
 
 - Entry point: `src/main.tsx` — mounts React with `BrowserRouter`, renders `App`
 - Routes are defined in `src/App.tsx`
-- All fetch calls use relative paths (e.g. `/api/health`); Vite proxies `/api/*` to `http://localhost:3000` in dev — no CORS issues during development
+- All API calls use relative paths (e.g. `/api/health`); Vite proxies `/api/*` to `http://localhost:3000` in dev — no CORS issues during development
 - Path alias `@` → `./src` configured in both `vite.config.ts` and `tsconfig.json`
 - `src/lib/utils.ts` exports `cn()` helper (clsx + tailwind-merge)
+
+#### Data fetching
+
+- Use **axios** for all HTTP requests (not `fetch`). Always pass `{ withCredentials: true }` so session cookies are sent.
+- Use **TanStack Query** (`@tanstack/react-query`) for all server state. `QueryClientProvider` is set up in `main.tsx`. Use `useQuery` for reads and `useMutation` for writes — do not manage loading/error state manually with `useState` + `useEffect`.
 
 #### Tailwind CSS v4
 
