@@ -64,17 +64,22 @@ export default function CreateUserModal({
         </DialogHeader>
         <Form {...form}>
           <form
+            noValidate
             onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
             className="space-y-4 mt-2"
           >
             <FormField
               control={form.control}
               name="name"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Jane Doe" {...field} />
+                    <Input
+                      placeholder="Jane Doe"
+                      className={fieldState.invalid ? "border-red-500" : ""}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -83,13 +88,14 @@ export default function CreateUserModal({
             <FormField
               control={form.control}
               name="email"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input
                       type="email"
                       placeholder="jane@example.com"
+                      className={fieldState.invalid ? "border-red-500" : ""}
                       {...field}
                     />
                   </FormControl>
@@ -100,13 +106,14 @@ export default function CreateUserModal({
             <FormField
               control={form.control}
               name="password"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
                       placeholder="Min. 8 characters"
+                      className={fieldState.invalid ? "border-red-500" : ""}
                       {...field}
                     />
                   </FormControl>

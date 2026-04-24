@@ -1,4 +1,5 @@
 import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import axios from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "@/test/render";
@@ -92,5 +93,49 @@ describe("UsersPage", () => {
     expect(mockedAxios.get).toHaveBeenCalledWith("/api/users", {
       withCredentials: true,
     });
+  });
+});
+
+describe("Create User modal", () => {
+  it("opens when the Create User button is clicked", async () => {
+    mockedAxios.get = vi.fn(() => new Promise(() => {}));
+    const user = userEvent.setup();
+    renderWithProviders(<UsersPage />);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /create user/i }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("closes when Escape is pressed", async () => {
+    mockedAxios.get = vi.fn(() => new Promise(() => {}));
+    const user = userEvent.setup();
+    renderWithProviders(<UsersPage />);
+
+    await user.click(screen.getByRole("button", { name: /create user/i }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+  });
+
+  it("closes when clicking outside the dialog", async () => {
+    mockedAxios.get = vi.fn(() => new Promise(() => {}));
+    const user = userEvent.setup();
+    renderWithProviders(<UsersPage />);
+
+    await user.click(screen.getByRole("button", { name: /create user/i }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    // The overlay is the Radix backdrop — a sibling to the dialog content in the portal
+    const overlay = document.querySelector<HTMLElement>(
+      '[data-state="open"]:not([role="dialog"])',
+    );
+    await user.click(overlay!);
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
   });
 });
