@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { randomBytes, scrypt } from "node:crypto";
-import { createUserSchema } from "@helpdesk/core";
+import { createUserSchema, editUserBodySchema } from "@helpdesk/core";
 import { requireAuth, requireAdmin } from "../middleware/requireAuth";
 import prisma from "../prisma/client";
 
@@ -20,6 +20,10 @@ function hashPassword(plain: string): Promise<string> {
   });
 }
 
+function firstIssue(error: { issues: { message: string }[] }): string {
+  return error.issues[0]?.message ?? "Invalid input.";
+}
+
 const router = Router();
 
 router.get("/", requireAuth, requireAdmin, async (_req, res) => {
@@ -33,7 +37,7 @@ router.get("/", requireAuth, requireAdmin, async (_req, res) => {
 router.post("/", requireAuth, requireAdmin, async (req, res) => {
   const result = createUserSchema.safeParse(req.body);
   if (!result.success) {
-    const error = result.error.issues[0]?.message ?? "Invalid input.";
+    const error = firstIssue(result.error);
     return res.status(400).json({ error });
   }
   const { name, email, password } = result.data;
@@ -70,6 +74,41 @@ router.post("/", requireAuth, requireAdmin, async (req, res) => {
   } catch (e: any) {
     if (e.code === "P2002")
       return res.status(409).json({ error: "Email already in use." });
+    throw e;
+  }
+});
+
+router.patch("/:id", requireAuth, requireAdmin, async (req, res) => {
+  const result = editUserBodySchema.safeParse(req.body);
+  if (!result.success) {
+    const error = firstIssue(result.error);
+    return res.status(400).json({ error });
+  }
+  const { name, email, password } = result.data;
+  const { id } = req.params as { id: string };
+
+  try {
+    const user = await prisma.user.update({
+      where: { id },
+      data: { name: name.trim(), email },
+    });
+    if (password) {
+      const hashed = await hashPassword(password);
+      await prisma.account.updateMany({
+        where: { userId: id, providerId: "credential" },
+        data: { password: hashed },
+      });
+    }
+    return res.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+    });
+  } catch (e: any) {
+    if (e.code === "P2025") return res.status(404).json({ error: "User not found." });
+    if (e.code === "P2002") return res.status(409).json({ error: "Email already in use." });
     throw e;
   }
 });
