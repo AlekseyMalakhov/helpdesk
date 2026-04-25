@@ -1,0 +1,2 @@
+- [E2E Patterns & Conventions](e2e_patterns.md) — Playwright conventions, helpers, selector strategy, and test structure for this project
+- [API Direct-Creation Pattern](e2e_api_setup.md) — how to create test fixture users via page.request.post to avoid UI coupling in setup
