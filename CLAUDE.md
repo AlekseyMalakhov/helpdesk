@@ -35,21 +35,25 @@ helpdesk/
 All commands require Bun (`~/.bun/bin/bun`). Install: `powershell -c "irm bun.sh/install.ps1 | iex"`.
 
 **Install dependencies** (from root):
+
 ```
 bun install
 ```
 
 **Run server** (port 3000):
+
 ```
 cd server && bun dev        # watch mode
 ```
 
 **Run client** (port 5173):
+
 ```
 cd client && bun dev
 ```
 
 **Database** (requires Docker):
+
 ```
 docker compose up -d                        # start PostgreSQL (port 5432) + test PostgreSQL (port 5433)
 cd server && bun db:migrate                 # run migrations
@@ -57,7 +61,10 @@ cd server && bun db:seed                    # seed admin + agent users
 cd server && bun db:generate                # regenerate Prisma client after schema changes
 ```
 
+**Database operations in command line must be run sequentially and in the foreground** — never in the background and never in parallel. If operation fails with an advisory lock error (`P1002`), **stop immediately and ask the user** — do not retry in a loop, do not use `db push` as a workaround, and do not attempt to resolve the lock manually.
+
 **E2E tests** (requires Docker running):
+
 ```
 bun test:e2e                                # run all tests headlessly
 bun test:e2e:ui                             # open Playwright UI
@@ -136,6 +143,7 @@ Uses **better-auth** (not express-session). Key facts:
 Uses **Vitest** + **React Testing Library**. Config lives in `vite.config.ts` (`test.environment: 'jsdom'`). Setup file at `client/src/test/setup.ts` imports `@testing-library/jest-dom`.
 
 **Run tests:**
+
 ```
 cd client && bun run test       # watch mode
 cd client && bun run test --run # single pass (CI)
@@ -144,6 +152,7 @@ cd client && bun run test --run # single pass (CI)
 Do **not** use `bun test` — that invokes Bun's built-in runner instead of Vitest.
 
 **Conventions:**
+
 - Test files live next to the component they test: `Foo.tsx` → `Foo.test.tsx`.
 - Wrap renders with `renderWithProviders()` from `@/test/render` — it sets up a fresh `QueryClient` with `retry: false`.
 - Mock axios with `vi.mock('axios')` and reset mocks in `beforeEach(() => vi.resetAllMocks())`.
