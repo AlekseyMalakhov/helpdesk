@@ -4,9 +4,10 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import CreateUserModal from "@/components/CreateUserModal";
 import EditUserModal from "@/components/EditUserModal";
+import DeleteUserModal from "@/components/DeleteUserModal";
 import UsersTable, { type User } from "@/components/UsersTable";
 
-type ModalState = { type: "create" } | { type: "edit"; user: User } | null;
+type ModalState = { type: "create" } | { type: "edit"; user: User } | { type: "delete"; user: User } | null;
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
@@ -58,11 +59,24 @@ export default function UsersPage() {
         />
       )}
 
+      {modal?.type === "delete" && (
+        <DeleteUserModal
+          key={modal.user.id}
+          user={modal.user}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setModal(null);
+          }}
+          onSuccess={handleMutationSuccess}
+        />
+      )}
+
       <UsersTable
         users={users}
         isPending={isPending}
         isError={isError}
         onEditClick={(user) => setModal({ type: "edit", user })}
+        onDeleteClick={(user) => setModal({ type: "delete", user })}
       />
     </main>
   );

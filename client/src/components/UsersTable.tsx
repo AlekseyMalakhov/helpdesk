@@ -1,4 +1,4 @@
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
@@ -17,6 +17,7 @@ interface Props {
   isPending: boolean;
   isError: boolean;
   onEditClick: (user: User) => void;
+  onDeleteClick: (user: User) => void;
 }
 
 const columns = ["Name", "Email", "Role", "Created", "Actions"];
@@ -35,7 +36,7 @@ function TableHeader() {
   );
 }
 
-export default function UsersTable({ users, isPending, isError, onEditClick }: Props) {
+export default function UsersTable({ users, isPending, isError, onEditClick, onDeleteClick }: Props) {
   if (isError) {
     return <p className="text-sm text-red-600">Failed to load users</p>;
   }
@@ -82,14 +83,27 @@ export default function UsersTable({ users, isPending, isError, onEditClick }: P
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onEditClick(user)}
-                      aria-label={`Edit ${user.name}`}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onEditClick(user)}
+                        aria-label={`Edit ${user.name}`}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      {user.role !== "admin" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onDeleteClick(user)}
+                          aria-label={`Delete ${user.name}`}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

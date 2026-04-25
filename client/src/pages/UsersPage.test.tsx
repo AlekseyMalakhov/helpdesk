@@ -96,6 +96,56 @@ describe("UsersPage", () => {
   });
 });
 
+describe("Delete User", () => {
+  it("renders a delete button for agent rows but not for admin rows", async () => {
+    mockedAxios.get = vi.fn().mockResolvedValue({ data: USERS });
+    renderWithProviders(<UsersPage />);
+    await waitFor(() => screen.getByText("Alice Admin"));
+
+    expect(screen.getByRole("button", { name: /delete bob agent/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /delete alice admin/i })).not.toBeInTheDocument();
+  });
+
+  it("opens the confirmation modal when the delete button is clicked", async () => {
+    mockedAxios.get = vi.fn().mockResolvedValue({ data: USERS });
+    const user = userEvent.setup();
+    renderWithProviders(<UsersPage />);
+    await waitFor(() => screen.getByText("Bob Agent"));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /delete bob agent/i }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText(/are you sure you want to delete/i)).toBeInTheDocument();
+  });
+
+  it("closes the modal and refetches users after a successful deletion", async () => {
+    mockedAxios.get = vi.fn().mockResolvedValue({ data: USERS });
+    mockedAxios.delete = vi.fn().mockResolvedValue({});
+    const user = userEvent.setup();
+    renderWithProviders(<UsersPage />);
+    await waitFor(() => screen.getByText("Bob Agent"));
+
+    await user.click(screen.getByRole("button", { name: /delete bob agent/i }));
+    await user.click(screen.getByRole("button", { name: /^delete$/i }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(mockedAxios.get).toHaveBeenCalledTimes(2);
+  });
+
+  it("closes the modal when Cancel is clicked without making a DELETE request", async () => {
+    mockedAxios.get = vi.fn().mockResolvedValue({ data: USERS });
+    const user = userEvent.setup();
+    renderWithProviders(<UsersPage />);
+    await waitFor(() => screen.getByText("Bob Agent"));
+
+    await user.click(screen.getByRole("button", { name: /delete bob agent/i }));
+    await user.click(screen.getByRole("button", { name: /cancel/i }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(mockedAxios.delete).not.toHaveBeenCalled();
+  });
+});
+
 describe("Create User modal", () => {
   it("opens when the Create User button is clicked", async () => {
     mockedAxios.get = vi.fn(() => new Promise(() => {}));
