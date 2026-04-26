@@ -12,6 +12,18 @@ enum Role {
   agent
 }
 
+enum TicketStatus {
+  open
+  resolved
+  closed
+}
+
+enum TicketCategory {
+  general_question
+  technical_question
+  refund_request
+}
+
 model User {
   id            String    @id
   name          String
@@ -24,9 +36,38 @@ model User {
   deletedAt     DateTime?
   sessions      Session[]
   accounts      Account[]
+  tickets       Ticket[]
 
   @@unique([email])
   @@map("user")
+}
+
+model Ticket {
+  id              Int             @id @default(autoincrement())
+  subject         String
+  body            String
+  senderEmail     String
+  senderName      String
+  status          TicketStatus    @default(open)
+  category        TicketCategory?
+  assignedAgentId String?
+  assignedAgent   User?           @relation(fields: [assignedAgentId], references: [id])
+  aiSummary       String?
+  replies         Reply[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@map("ticket")
+}
+
+model Reply {
+  id        String   @id @default(cuid())
+  ticketId  Int
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+
+  @@map("reply")
 }
 
 model Session {

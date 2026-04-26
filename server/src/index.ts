@@ -5,6 +5,8 @@ import { rateLimit } from "express-rate-limit";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
 import usersRouter from "./routes/users";
+import ticketsRouter from "./routes/tickets";
+import inboundEmailRouter from "./routes/inbound-email";
 export { requireAuth, requireAdmin } from "./middleware/requireAuth";
 
 if (
@@ -49,6 +51,8 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/users", usersRouter);
+app.use("/api/tickets", ticketsRouter);
+app.use("/api/webhooks", inboundEmailRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
