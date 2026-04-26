@@ -1,12 +1,25 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
+import { type SortingState } from '@tanstack/react-table'
 import TicketsTable, { type TicketRow } from '@/components/TicketsTable'
 
 export default function TicketsPage() {
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'createdAt', desc: true },
+  ])
+
   const { data: tickets, isPending, isError } = useQuery<TicketRow[]>({
-    queryKey: ['tickets'],
-    queryFn: () =>
-      axios.get('/api/tickets', { withCredentials: true }).then((r) => r.data),
+    queryKey: ['tickets', sorting],
+    queryFn: () => {
+      const sort = sorting[0]
+      const params = sort
+        ? { sortBy: sort.id, sortOrder: sort.desc ? 'desc' : 'asc' }
+        : {}
+      return axios
+        .get('/api/tickets', { params, withCredentials: true })
+        .then((r) => r.data)
+    },
   })
 
   if (isPending) return <p className="p-6 text-sm text-gray-500">Loading tickets…</p>
@@ -18,7 +31,7 @@ export default function TicketsPage() {
       {tickets.length === 0 ? (
         <p className="text-sm text-gray-500">No tickets yet.</p>
       ) : (
-        <TicketsTable tickets={tickets} />
+        <TicketsTable tickets={tickets} sorting={sorting} onSortingChange={setSorting} />
       )}
     </div>
   )

@@ -5,9 +5,31 @@ import { updateTicketSchema } from "@helpdesk/core";
 
 const router = Router();
 
-router.get("/", requireAuth, async (_req, res) => {
+const SORTABLE_COLUMNS = [
+  "subject",
+  "senderName",
+  "senderEmail",
+  "status",
+  "category",
+  "createdAt",
+] as const;
+type SortableColumn = (typeof SORTABLE_COLUMNS)[number];
+
+router.get("/", requireAuth, async (req, res) => {
+  const { sortBy, sortOrder } = req.query as {
+    sortBy?: string;
+    sortOrder?: string;
+  };
+
+  const col: SortableColumn = SORTABLE_COLUMNS.includes(
+    sortBy as SortableColumn,
+  )
+    ? (sortBy as SortableColumn)
+    : "createdAt";
+  const dir: "asc" | "desc" = sortOrder === "asc" ? "asc" : "desc";
+
   const tickets = await prisma.ticket.findMany({
-    orderBy: { createdAt: "desc" },
+    orderBy: { [col]: dir },
     select: {
       id: true,
       subject: true,

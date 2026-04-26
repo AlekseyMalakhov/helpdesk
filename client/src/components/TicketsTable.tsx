@@ -1,4 +1,14 @@
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router'
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  createColumnHelper,
+  type SortingState,
+  type OnChangeFn,
+} from '@tanstack/react-table'
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -21,41 +31,108 @@ export interface TicketRow {
   createdAt: string
 }
 
-export default function TicketsTable({ tickets }: { tickets: TicketRow[] }) {
+interface Props {
+  tickets: TicketRow[]
+  sorting: SortingState
+  onSortingChange: OnChangeFn<SortingState>
+}
+
+const columnHelper = createColumnHelper<TicketRow>()
+
+function SortIcon({ isSorted }: { isSorted: false | 'asc' | 'desc' }) {
+  if (isSorted === 'asc') return <ArrowUp className="ml-1 inline h-3 w-3" />
+  if (isSorted === 'desc') return <ArrowDown className="ml-1 inline h-3 w-3" />
+  return <ArrowUpDown className="ml-1 inline h-3 w-3 opacity-40" />
+}
+
+export default function TicketsTable({ tickets, sorting, onSortingChange }: Props) {
   const navigate = useNavigate()
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor('subject', {
+        header: 'Subject',
+        cell: (info) => (
+          <span className="font-medium">{info.getValue()}</span>
+        ),
+      }),
+      columnHelper.accessor('senderName', {
+        header: 'Sender',
+        cell: (info) => (
+          <span className="text-sm text-gray-600">
+            {info.getValue()} &lt;{info.row.original.senderEmail}&gt;
+          </span>
+        ),
+      }),
+      columnHelper.accessor('status', {
+        header: 'Status',
+        cell: (info) => (
+          <Badge variant={statusVariant[info.getValue()]}>{info.getValue()}</Badge>
+        ),
+      }),
+      columnHelper.accessor('category', {
+        header: 'Category',
+        cell: (info) => {
+          const val = info.getValue()
+          return (
+            <span className="text-sm text-gray-600">
+              {val ? categoryLabel[val] : '—'}
+            </span>
+          )
+        },
+      }),
+      columnHelper.accessor('createdAt', {
+        header: 'Created',
+        cell: (info) => (
+          <span className="text-sm text-gray-500">
+            {new Date(info.getValue()).toLocaleDateString()}
+          </span>
+        ),
+      }),
+    ],
+    [],
+  )
+
+  const table = useReactTable({
+    data: tickets,
+    columns,
+    state: { sorting },
+    onSortingChange,
+    manualSorting: true,
+    getCoreRowModel: getCoreRowModel(),
+  })
 
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Subject</TableHead>
-            <TableHead>Sender</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Created</TableHead>
-          </TableRow>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <TableHead
+                  key={header.id}
+                  className="cursor-pointer select-none"
+                  onClick={header.column.getToggleSortingHandler()}
+                >
+                  {flexRender(header.column.columnDef.header, header.getContext())}
+                  <SortIcon isSorted={header.column.getIsSorted()} />
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
         </TableHeader>
         <TableBody>
-          {tickets.map((t) => (
+          {table.getRowModel().rows.map((row) => (
             <TableRow
-              key={t.id}
+              key={row.id}
               className="cursor-pointer hover:bg-muted/50"
-              onClick={() => navigate(`/tickets/${t.id}`)}
+              onClick={() => navigate(`/tickets/${row.original.id}`)}
             >
-              <TableCell className="font-medium">{t.subject}</TableCell>
-              <TableCell className="text-sm text-gray-600">
-                {t.senderName} &lt;{t.senderEmail}&gt;
-              </TableCell>
-              <TableCell>
-                <Badge variant={statusVariant[t.status]}>{t.status}</Badge>
-              </TableCell>
-              <TableCell className="text-sm text-gray-600">
-                {t.category ? categoryLabel[t.category] : '—'}
-              </TableCell>
-              <TableCell className="text-sm text-gray-500">
-                {new Date(t.createdAt).toLocaleDateString()}
-              </TableCell>
+              {row.getVisibleCells().map((cell) => (
+                <TableCell key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              ))}
             </TableRow>
           ))}
         </TableBody>
