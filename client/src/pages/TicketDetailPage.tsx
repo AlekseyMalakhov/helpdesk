@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { TicketStatus, TicketCategory } from '@helpdesk/core'
+import { statusVariant, categoryLabel } from '@/lib/tickets'
 
 interface Reply {
   id: string
@@ -32,17 +33,6 @@ interface Ticket {
   createdAt: string
 }
 
-const statusVariant: Record<TicketStatus, 'default' | 'secondary' | 'outline'> = {
-  open: 'default',
-  resolved: 'secondary',
-  closed: 'outline',
-}
-
-const categoryLabel: Record<TicketCategory, string> = {
-  general_question: 'General',
-  technical_question: 'Technical',
-  refund_request: 'Refund',
-}
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>()
