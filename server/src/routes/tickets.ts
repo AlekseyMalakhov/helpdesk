@@ -1,7 +1,8 @@
 import { Router } from "express";
+import { type Prisma } from "@prisma/client";
 import prisma from "../prisma/client";
 import { requireAuth } from "../middleware/requireAuth";
-import { updateTicketSchema } from "@helpdesk/core";
+import { updateTicketSchema, ticketStatusSchema, ticketCategorySchema } from "@helpdesk/core";
 
 const router = Router();
 
@@ -16,9 +17,12 @@ const SORTABLE_COLUMNS = [
 type SortableColumn = (typeof SORTABLE_COLUMNS)[number];
 
 router.get("/", requireAuth, async (req, res) => {
-  const { sortBy, sortOrder } = req.query as {
+  const { sortBy, sortOrder, status, category, search } = req.query as {
     sortBy?: string;
     sortOrder?: string;
+    status?: string;
+    category?: string;
+    search?: string;
   };
 
   const col: SortableColumn = SORTABLE_COLUMNS.includes(
@@ -28,7 +32,24 @@ router.get("/", requireAuth, async (req, res) => {
     : "createdAt";
   const dir: "asc" | "desc" = sortOrder === "asc" ? "asc" : "desc";
 
+  const where: Prisma.TicketWhereInput = {};
+
+  const statusParsed = ticketStatusSchema.safeParse(status);
+  if (statusParsed.success) where.status = statusParsed.data;
+
+  const categoryParsed = ticketCategorySchema.safeParse(category);
+  if (categoryParsed.success) where.category = categoryParsed.data;
+
+  if (search?.trim()) {
+    where.OR = [
+      { subject: { contains: search, mode: "insensitive" } },
+      { senderName: { contains: search, mode: "insensitive" } },
+      { senderEmail: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
   const tickets = await prisma.ticket.findMany({
+    where,
     orderBy: { [col]: dir },
     select: {
       id: true,
