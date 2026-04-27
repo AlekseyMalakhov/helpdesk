@@ -48,20 +48,29 @@ router.get("/", requireAuth, async (req, res) => {
     ];
   }
 
-  const tickets = await prisma.ticket.findMany({
-    where,
-    orderBy: { [col]: dir },
-    select: {
-      id: true,
-      subject: true,
-      senderEmail: true,
-      senderName: true,
-      status: true,
-      category: true,
-      createdAt: true,
-    },
-  });
-  res.json(tickets);
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize as string) || 25));
+
+  const [tickets, total] = await Promise.all([
+    prisma.ticket.findMany({
+      where,
+      orderBy: { [col]: dir },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      select: {
+        id: true,
+        subject: true,
+        senderEmail: true,
+        senderName: true,
+        status: true,
+        category: true,
+        createdAt: true,
+      },
+    }),
+    prisma.ticket.count({ where }),
+  ]);
+
+  res.json({ tickets, total });
 });
 
 router.get("/:id", requireAuth, async (req, res) => {

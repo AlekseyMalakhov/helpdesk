@@ -7,6 +7,7 @@ import {
   createColumnHelper,
   type SortingState,
   type OnChangeFn,
+  type PaginationState,
 } from '@tanstack/react-table'
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import {
@@ -20,6 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import type { TicketStatus, TicketCategory } from '@helpdesk/core'
 import { statusVariant, categoryLabel } from '@/lib/tickets'
+import TablePagination from '@/components/TablePagination'
 
 export interface TicketRow {
   id: number
@@ -33,8 +35,11 @@ export interface TicketRow {
 
 interface Props {
   tickets: TicketRow[]
+  rowCount: number
   sorting: SortingState
   onSortingChange: OnChangeFn<SortingState>
+  pagination: PaginationState
+  onPaginationChange: OnChangeFn<PaginationState>
 }
 
 const columnHelper = createColumnHelper<TicketRow>()
@@ -45,16 +50,21 @@ function SortIcon({ isSorted }: { isSorted: false | 'asc' | 'desc' }) {
   return <ArrowUpDown className="ml-1 inline h-3 w-3 opacity-40" />
 }
 
-export default function TicketsTable({ tickets, sorting, onSortingChange }: Props) {
+export default function TicketsTable({
+  tickets,
+  rowCount,
+  sorting,
+  onSortingChange,
+  pagination,
+  onPaginationChange,
+}: Props) {
   const navigate = useNavigate()
 
   const columns = useMemo(
     () => [
       columnHelper.accessor('subject', {
         header: 'Subject',
-        cell: (info) => (
-          <span className="font-medium">{info.getValue()}</span>
-        ),
+        cell: (info) => <span className="font-medium">{info.getValue()}</span>,
       }),
       columnHelper.accessor('senderName', {
         header: 'Sender',
@@ -96,11 +106,19 @@ export default function TicketsTable({ tickets, sorting, onSortingChange }: Prop
   const table = useReactTable({
     data: tickets,
     columns,
-    state: { sorting },
+    rowCount,
+    state: { sorting, pagination },
     onSortingChange,
+    onPaginationChange,
     manualSorting: true,
+    manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
   })
+
+  const { pageIndex, pageSize } = table.getState().pagination
+  const pageCount = table.getPageCount()
+  const from = rowCount === 0 ? 0 : pageIndex * pageSize + 1
+  const to = Math.min((pageIndex + 1) * pageSize, rowCount)
 
   return (
     <div className="rounded-md border">
@@ -137,6 +155,18 @@ export default function TicketsTable({ tickets, sorting, onSortingChange }: Prop
           ))}
         </TableBody>
       </Table>
+
+      <TablePagination
+        from={from}
+        to={to}
+        rowCount={rowCount}
+        pageIndex={pageIndex}
+        pageCount={pageCount}
+        canPreviousPage={table.getCanPreviousPage()}
+        canNextPage={table.getCanNextPage()}
+        onPreviousPage={() => table.previousPage()}
+        onNextPage={() => table.nextPage()}
+      />
     </div>
   )
 }
