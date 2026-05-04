@@ -8,10 +8,10 @@ export const ticketCategorySchema = z.enum([
 ]);
 
 export const inboundEmailSchema = z.object({
-  subject: z.string().min(1),
-  body: z.string().min(1),
-  senderEmail: z.email(),
-  senderName: z.string().min(1),
+  subject: z.string().min(1).max(255),
+  body: z.string().min(1).max(2000),
+  senderEmail: z.email().max(255),
+  senderName: z.string().min(1).max(255),
 });
 
 export const updateTicketSchema = z.object({
