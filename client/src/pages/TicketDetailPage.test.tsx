@@ -186,8 +186,7 @@ describe('TicketDetailPage — agent assignment', () => {
   it('shows the assigned agent name in the agent select', async () => {
     setupGetMocks(makeTicket({ id: 'agent-1', name: 'Alice Agent' }))
     renderPage()
-    await waitFor(() => screen.getByText('Test ticket'))
-    expect(screen.getByDisplayValue('Alice Agent')).toBeInTheDocument()
+    expect(await screen.findByDisplayValue('Alice Agent')).toBeInTheDocument()
   })
 
   it('Save button is disabled when there are no changes', async () => {
@@ -201,7 +200,7 @@ describe('TicketDetailPage — agent assignment', () => {
     setupGetMocks(makeTicket(null))
     const user = userEvent.setup()
     renderPage()
-    await waitFor(() => screen.getByText('Test ticket'))
+    await screen.findByText('Alice Agent')
 
     await user.selectOptions(screen.getByDisplayValue('Unassigned'), 'Alice Agent')
 
@@ -213,7 +212,7 @@ describe('TicketDetailPage — agent assignment', () => {
     mockedAxios.patch = vi.fn().mockResolvedValue({ data: {} })
     const user = userEvent.setup()
     renderPage()
-    await waitFor(() => screen.getByText('Test ticket'))
+    await screen.findByText('Alice Agent')
 
     await user.selectOptions(screen.getByDisplayValue('Unassigned'), 'Alice Agent')
     await user.click(screen.getByRole('button', { name: 'Save' }))
@@ -232,9 +231,8 @@ describe('TicketDetailPage — agent assignment', () => {
     mockedAxios.patch = vi.fn().mockResolvedValue({ data: {} })
     const user = userEvent.setup()
     renderPage()
-    await waitFor(() => screen.getByText('Test ticket'))
 
-    await user.selectOptions(screen.getByDisplayValue('Alice Agent'), 'Unassigned')
+    await user.selectOptions(await screen.findByDisplayValue('Alice Agent'), 'Unassigned')
     await user.click(screen.getByRole('button', { name: 'Save' }))
 
     await waitFor(() =>
@@ -251,7 +249,7 @@ describe('TicketDetailPage — agent assignment', () => {
     mockedAxios.patch = vi.fn().mockResolvedValue({ data: {} })
     const user = userEvent.setup()
     renderPage()
-    await waitFor(() => screen.getByText('Test ticket'))
+    await screen.findByText('Alice Agent')
 
     await user.selectOptions(screen.getByDisplayValue('Unassigned'), 'Alice Agent')
     await user.click(screen.getByRole('button', { name: 'Save' }))
