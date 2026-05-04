@@ -20,6 +20,11 @@ interface Reply {
   createdAt: string
 }
 
+interface Agent {
+  id: string
+  name: string
+}
+
 interface Ticket {
   id: number
   subject: string
@@ -28,11 +33,14 @@ interface Ticket {
   senderName: string
   status: TicketStatus
   category: TicketCategory | null
+  assignedAgentId: string | null
+  assignedAgent: Agent | null
   aiSummary: string | null
   replies: Reply[]
   createdAt: string
 }
 
+const UNASSIGNED = '__unassigned__'
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -44,15 +52,24 @@ export default function TicketDetailPage() {
       axios.get(`/api/tickets/${id}`, { withCredentials: true }).then((r) => r.data),
   })
 
+  const { data: agents = [] } = useQuery<Agent[]>({
+    queryKey: ['agents'],
+    queryFn: () =>
+      axios.get('/api/users/agents', { withCredentials: true }).then((r) => r.data),
+  })
+
   const [selectedStatus, setSelectedStatus] = useState<TicketStatus | ''>('')
+  // undefined = no pending change; null = unassign; string = assign to agent id
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null | undefined>(undefined)
 
   const mutation = useMutation({
-    mutationFn: (status: TicketStatus) =>
-      axios.patch(`/api/tickets/${id}`, { status }, { withCredentials: true }),
+    mutationFn: (data: { status?: TicketStatus; assignedAgentId?: string | null }) =>
+      axios.patch(`/api/tickets/${id}`, data, { withCredentials: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ticket', id] })
       queryClient.invalidateQueries({ queryKey: ['tickets'] })
       setSelectedStatus('')
+      setSelectedAgentId(undefined)
     },
   })
 
@@ -60,6 +77,27 @@ export default function TicketDetailPage() {
   if (isError) return <p className="p-6 text-sm text-red-500">Failed to load ticket.</p>
 
   const currentStatus = selectedStatus || ticket.status
+
+  const hasStatusChange = selectedStatus !== '' && selectedStatus !== ticket.status
+  const hasAgentChange =
+    selectedAgentId !== undefined &&
+    selectedAgentId !== (ticket.assignedAgentId ?? null)
+
+  const handleSave = () => {
+    const data: { status?: TicketStatus; assignedAgentId?: string | null } = {}
+    if (hasStatusChange) data.status = selectedStatus as TicketStatus
+    if (hasAgentChange) data.assignedAgentId = selectedAgentId
+    mutation.mutate(data)
+  }
+
+  const agentSelectValue =
+    selectedAgentId !== undefined
+      ? (selectedAgentId ?? UNASSIGNED)
+      : (ticket.assignedAgentId ?? UNASSIGNED)
+
+  const handleAgentChange = (value: string) => {
+    setSelectedAgentId(value === UNASSIGNED ? null : value)
+  }
 
   return (
     <div className="p-6 max-w-2xl">
@@ -77,7 +115,7 @@ export default function TicketDetailPage() {
         {ticket.body}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Select
           value={currentStatus}
           onValueChange={(v) => setSelectedStatus(v as TicketStatus)}
@@ -91,10 +129,25 @@ export default function TicketDetailPage() {
             <SelectItem value="closed">Closed</SelectItem>
           </SelectContent>
         </Select>
+
+        <Select value={agentSelectValue} onValueChange={handleAgentChange}>
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="Assign agent" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+            {agents.map((agent) => (
+              <SelectItem key={agent.id} value={agent.id}>
+                {agent.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <Button
           size="sm"
-          disabled={!selectedStatus || selectedStatus === ticket.status || mutation.isPending}
-          onClick={() => selectedStatus && mutation.mutate(selectedStatus as TicketStatus)}
+          disabled={(!hasStatusChange && !hasAgentChange) || mutation.isPending}
+          onClick={handleSave}
         >
           {mutation.isPending ? 'Saving…' : 'Save'}
         </Button>

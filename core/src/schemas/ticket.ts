@@ -17,7 +17,7 @@ export const inboundEmailSchema = z.object({
 export const updateTicketSchema = z.object({
   status: ticketStatusSchema.optional(),
   category: ticketCategorySchema.optional(),
-  assignedAgentId: z.string().optional(),
+  assignedAgentId: z.string().nullable().optional(),
 });
 
 export type TicketStatus = z.infer<typeof ticketStatusSchema>;

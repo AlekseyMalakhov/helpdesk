@@ -81,7 +81,10 @@ router.get("/:id", requireAuth, async (req, res) => {
   }
   const ticket = await prisma.ticket.findUnique({
     where: { id },
-    include: { replies: { orderBy: { createdAt: "asc" } } },
+    include: {
+      replies: { orderBy: { createdAt: "asc" } },
+      assignedAgent: { select: { id: true, name: true } },
+    },
   });
   if (!ticket) {
     res.status(404).json({ error: "Ticket not found" });

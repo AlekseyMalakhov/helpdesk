@@ -26,6 +26,15 @@ function firstIssue(error: { issues: { message: string }[] }): string {
 
 const router = Router();
 
+router.get("/agents", requireAuth, async (_req, res) => {
+  const agents = await prisma.user.findMany({
+    where: { deletedAt: null, role: "agent" },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+  res.json(agents);
+});
+
 router.get("/", requireAuth, requireAdmin, async (_req, res) => {
   const users = await prisma.user.findMany({
     where: { deletedAt: null },
