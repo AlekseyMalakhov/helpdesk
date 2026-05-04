@@ -33,7 +33,6 @@ interface Ticket {
   senderName: string
   status: TicketStatus
   category: TicketCategory | null
-  assignedAgentId: string | null
   assignedAgent: Agent | null
   aiSummary: string | null
   replies: Reply[]
@@ -81,7 +80,7 @@ export default function TicketDetailPage() {
   const hasStatusChange = selectedStatus !== '' && selectedStatus !== ticket.status
   const hasAgentChange =
     selectedAgentId !== undefined &&
-    selectedAgentId !== (ticket.assignedAgentId ?? null)
+    selectedAgentId !== (ticket.assignedAgent?.id ?? null)
 
   const handleSave = () => {
     const data: { status?: TicketStatus; assignedAgentId?: string | null } = {}
@@ -93,7 +92,7 @@ export default function TicketDetailPage() {
   const agentSelectValue =
     selectedAgentId !== undefined
       ? (selectedAgentId ?? UNASSIGNED)
-      : (ticket.assignedAgentId ?? UNASSIGNED)
+      : (ticket.assignedAgent?.id ?? UNASSIGNED)
 
   const handleAgentChange = (value: string) => {
     setSelectedAgentId(value === UNASSIGNED ? null : value)

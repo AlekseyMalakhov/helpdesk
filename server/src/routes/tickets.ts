@@ -105,6 +105,14 @@ router.patch("/:id", requireAuth, async (req, res) => {
     return;
   }
 
+  if (result.data.assignedAgentId) {
+    const agent = await prisma.user.findUnique({ where: { id: result.data.assignedAgentId } });
+    if (!agent || agent.role !== "agent" || agent.deletedAt !== null) {
+      res.status(400).json({ error: "Invalid agent." });
+      return;
+    }
+  }
+
   const ticket = await prisma.ticket.findUnique({ where: { id } });
   if (!ticket) {
     res.status(404).json({ error: "Ticket not found" });
