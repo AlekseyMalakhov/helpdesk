@@ -58,16 +58,18 @@ export default function TicketDetailPage() {
   })
 
   const [selectedStatus, setSelectedStatus] = useState<TicketStatus | ''>('')
+  const [selectedCategory, setSelectedCategory] = useState<TicketCategory | ''>('')
   // undefined = no pending change; null = unassign; string = assign to agent id
   const [selectedAgentId, setSelectedAgentId] = useState<string | null | undefined>(undefined)
 
   const mutation = useMutation({
-    mutationFn: (data: { status?: TicketStatus; assignedAgentId?: string | null }) =>
+    mutationFn: (data: { status?: TicketStatus; category?: TicketCategory; assignedAgentId?: string | null }) =>
       axios.patch(`/api/tickets/${id}`, data, { withCredentials: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ticket', id] })
       queryClient.invalidateQueries({ queryKey: ['tickets'] })
       setSelectedStatus('')
+      setSelectedCategory('')
       setSelectedAgentId(undefined)
     },
   })
@@ -76,15 +78,18 @@ export default function TicketDetailPage() {
   if (isError) return <p className="p-6 text-sm text-red-500">Failed to load ticket.</p>
 
   const currentStatus = selectedStatus || ticket.status
+  const currentCategory = selectedCategory || ticket.category || ''
 
   const hasStatusChange = selectedStatus !== '' && selectedStatus !== ticket.status
+  const hasCategoryChange = selectedCategory !== '' && selectedCategory !== ticket.category
   const hasAgentChange =
     selectedAgentId !== undefined &&
     selectedAgentId !== (ticket.assignedAgent?.id ?? null)
 
   const handleSave = () => {
-    const data: { status?: TicketStatus; assignedAgentId?: string | null } = {}
+    const data: { status?: TicketStatus; category?: TicketCategory; assignedAgentId?: string | null } = {}
     if (hasStatusChange) data.status = selectedStatus as TicketStatus
+    if (hasCategoryChange) data.category = selectedCategory as TicketCategory
     if (hasAgentChange) data.assignedAgentId = selectedAgentId
     mutation.mutate(data)
   }
@@ -129,6 +134,17 @@ export default function TicketDetailPage() {
           </SelectContent>
         </Select>
 
+        <Select value={currentCategory} onValueChange={(v) => setSelectedCategory(v as TicketCategory)}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Set category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="general_question">{categoryLabel.general_question}</SelectItem>
+            <SelectItem value="technical_question">{categoryLabel.technical_question}</SelectItem>
+            <SelectItem value="refund_request">{categoryLabel.refund_request}</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Select value={agentSelectValue} onValueChange={handleAgentChange}>
           <SelectTrigger className="w-44">
             <SelectValue placeholder="Assign agent" />
@@ -145,7 +161,7 @@ export default function TicketDetailPage() {
 
         <Button
           size="sm"
-          disabled={(!hasStatusChange && !hasAgentChange) || mutation.isPending}
+          disabled={(!hasStatusChange && !hasCategoryChange && !hasAgentChange) || mutation.isPending}
           onClick={handleSave}
         >
           {mutation.isPending ? 'Saving…' : 'Save'}
