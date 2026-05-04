@@ -56,10 +56,12 @@ cd client && bun dev
 
 ```
 docker compose up -d                        # start PostgreSQL (port 5432) + test PostgreSQL (port 5433)
-cd server && bun db:migrate                 # run migrations
+cd server && bun db:migrate -- --name <migration_name>   # run migrations (name is required)
 cd server && bun db:seed                    # seed admin + agent users
 cd server && bun db:generate                # regenerate Prisma client after schema changes
 ```
+
+**Always pass `-- --name <migration_name>` when running `bun db:migrate`** — omitting it opens an interactive prompt that hangs in non-interactive shells.
 
 **Database operations in command line must be run sequentially and in the foreground** — never in the background and never in parallel. If operation fails with an advisory lock error (`P1002`), **stop immediately and ask the user** — do not retry in a loop, do not use `db push` as a workaround, and do not attempt to resolve the lock manually.
 

@@ -65,6 +65,116 @@ beforeEach(() => {
   vi.resetAllMocks()
 })
 
+const makeReply = (overrides: Partial<{ id: string; body: string; senderType: 'agent' | 'customer'; createdAt: string }> = {}) => ({
+  id: 'reply-1',
+  body: 'A reply body',
+  senderType: 'agent' as const,
+  createdAt: '2024-01-02T10:00:00.000Z',
+  ...overrides,
+})
+
+describe('TicketDetailPage — replies display', () => {
+  it('shows "No replies yet." when ticket has no replies', async () => {
+    setupGetMocks()
+    renderPage()
+    await waitFor(() => screen.getByText('Test ticket'))
+    expect(screen.getByText('No replies yet.')).toBeInTheDocument()
+  })
+
+  it('renders the reply body', async () => {
+    setupGetMocks({ ...makeTicket(), replies: [makeReply({ body: 'Hello from agent' })] })
+    renderPage()
+    await waitFor(() => screen.getByText('Test ticket'))
+    expect(screen.getByText('Hello from agent')).toBeInTheDocument()
+  })
+
+  it('labels agent replies as "Agent" and customer replies as "Customer"', async () => {
+    setupGetMocks({
+      ...makeTicket(),
+      replies: [
+        makeReply({ id: 'r1', senderType: 'agent' }),
+        makeReply({ id: 'r2', senderType: 'customer', body: 'Customer reply' }),
+      ],
+    })
+    renderPage()
+    await waitFor(() => screen.getByText('Test ticket'))
+    expect(screen.getByText('Agent')).toBeInTheDocument()
+    expect(screen.getByText('Customer')).toBeInTheDocument()
+  })
+
+  it('shows reply count in the heading', async () => {
+    setupGetMocks({ ...makeTicket(), replies: [makeReply(), makeReply({ id: 'r2' })] })
+    renderPage()
+    await waitFor(() => screen.getByText('Test ticket'))
+    expect(screen.getByText(/Replies \(2\)/)).toBeInTheDocument()
+  })
+})
+
+describe('TicketDetailPage — reply form', () => {
+  it('does not POST when submitting an empty reply and shows a validation error', async () => {
+    setupGetMocks()
+    mockedAxios.post = vi.fn()
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => screen.getByText('Test ticket'))
+
+    await user.click(screen.getByRole('button', { name: 'Send reply' }))
+
+    expect(mockedAxios.post).not.toHaveBeenCalled()
+    expect(await screen.findByText('Reply cannot be empty.')).toBeInTheDocument()
+  })
+
+  it('POSTs to /api/tickets/:id/replies with the reply body', async () => {
+    setupGetMocks()
+    mockedAxios.post = vi.fn().mockResolvedValue({ data: makeReply() })
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => screen.getByText('Test ticket'))
+
+    await user.type(screen.getByPlaceholderText('Write a reply…'), 'My reply')
+    await user.click(screen.getByRole('button', { name: 'Send reply' }))
+
+    await waitFor(() =>
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        '/api/tickets/1/replies',
+        { body: 'My reply' },
+        { withCredentials: true },
+      ),
+    )
+  })
+
+  it('clears the textarea after a successful reply', async () => {
+    setupGetMocks()
+    mockedAxios.post = vi.fn().mockResolvedValue({ data: makeReply() })
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => screen.getByText('Test ticket'))
+
+    const textarea = screen.getByPlaceholderText('Write a reply…')
+    await user.type(textarea, 'My reply')
+    await user.click(screen.getByRole('button', { name: 'Send reply' }))
+
+    await waitFor(() => expect(textarea).toHaveValue(''))
+  })
+
+  it('shows "Sending…" and disables the button while the POST is in flight', async () => {
+    setupGetMocks()
+    let resolvePost!: (v: unknown) => void
+    mockedAxios.post = vi.fn().mockReturnValue(new Promise((r) => { resolvePost = r }))
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => screen.getByText('Test ticket'))
+
+    await user.type(screen.getByPlaceholderText('Write a reply…'), 'My reply')
+    await user.click(screen.getByRole('button', { name: 'Send reply' }))
+
+    const sendingBtn = await screen.findByRole('button', { name: 'Sending…' })
+    expect(sendingBtn).toBeDisabled()
+
+    resolvePost({ data: makeReply() })
+  })
+})
+
 describe('TicketDetailPage — agent assignment', () => {
   it('shows Unassigned in the agent select when ticket has no assigned agent', async () => {
     setupGetMocks(makeTicket(null))

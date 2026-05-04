@@ -2,9 +2,14 @@ import { Router } from "express";
 import { type Prisma } from "@prisma/client";
 import prisma from "../prisma/client";
 import { requireAuth } from "../middleware/requireAuth";
-import { updateTicketSchema, ticketStatusSchema, ticketCategorySchema } from "@helpdesk/core";
+import { updateTicketSchema, ticketStatusSchema, ticketCategorySchema, createReplySchema } from "@helpdesk/core";
 
 const router = Router();
+
+function parseTicketId(params: unknown): number | null {
+  const id = parseInt((params as { id: string }).id, 10);
+  return isNaN(id) ? null : id;
+}
 
 const SORTABLE_COLUMNS = [
   "subject",
@@ -74,8 +79,8 @@ router.get("/", requireAuth, async (req, res) => {
 });
 
 router.get("/:id", requireAuth, async (req, res) => {
-  const id = parseInt((req.params as { id: string }).id, 10);
-  if (isNaN(id)) {
+  const id = parseTicketId(req.params);
+  if (id === null) {
     res.status(400).json({ error: "Invalid ticket id" });
     return;
   }
@@ -94,8 +99,8 @@ router.get("/:id", requireAuth, async (req, res) => {
 });
 
 router.patch("/:id", requireAuth, async (req, res) => {
-  const id = parseInt((req.params as { id: string }).id, 10);
-  if (isNaN(id)) {
+  const id = parseTicketId(req.params);
+  if (id === null) {
     res.status(400).json({ error: "Invalid ticket id" });
     return;
   }
@@ -124,6 +129,32 @@ router.patch("/:id", requireAuth, async (req, res) => {
     data: result.data,
   });
   res.json(updated);
+});
+
+router.post("/:id/replies", requireAuth, async (req, res) => {
+  const id = parseTicketId(req.params);
+  if (id === null) {
+    res.status(400).json({ error: "Invalid ticket id" });
+    return;
+  }
+
+  const result = createReplySchema.safeParse(req.body);
+  if (!result.success) {
+    res.status(400).json({ error: result.error.issues[0]?.message ?? "Invalid input." });
+    return;
+  }
+
+  const ticket = await prisma.ticket.findUnique({ where: { id } });
+  if (!ticket) {
+    res.status(404).json({ error: "Ticket not found" });
+    return;
+  }
+
+  const reply = await prisma.reply.create({
+    data: { ticketId: id, body: result.data.body },
+  });
+
+  res.status(201).json(reply);
 });
 
 export default router;
