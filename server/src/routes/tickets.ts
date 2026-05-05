@@ -1,8 +1,11 @@
 import { Router } from "express";
 import { type Prisma } from "@prisma/client";
+import { generateText } from "ai";
+import { openai } from "@ai-sdk/openai";
 import prisma from "../prisma/client";
 import { requireAuth } from "../middleware/requireAuth";
 import { updateTicketSchema, ticketStatusSchema, ticketCategorySchema, createReplySchema } from "@helpdesk/core";
+import { z } from "zod";
 
 const router = Router();
 
@@ -129,6 +132,29 @@ router.patch("/:id", requireAuth, async (req, res) => {
     data: result.data,
   });
   res.json(updated);
+});
+
+router.post("/:id/polish-reply", requireAuth, async (req, res) => {
+  const id = parseTicketId(req.params);
+  if (id === null) {
+    res.status(400).json({ error: "Invalid ticket id" });
+    return;
+  }
+
+  const result = z.object({ body: z.string().min(1, "Reply body is required.") }).safeParse(req.body);
+  if (!result.success) {
+    res.status(400).json({ error: result.error.issues[0]?.message ?? "Invalid input." });
+    return;
+  }
+
+  const { text } = await generateText({
+    model: openai("gpt-5-nano"),
+    system:
+      "You are a professional customer support writing assistant. Improve the following agent reply to be clearer, more professional, and more helpful while preserving the original intent. Return only the improved reply text with no additional commentary.",
+    prompt: result.data.body,
+  });
+
+  res.json({ body: text });
 });
 
 router.post("/:id/replies", requireAuth, async (req, res) => {

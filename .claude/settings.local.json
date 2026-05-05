@@ -13,7 +13,8 @@
       "Bash(~/.bun/bin/bun x *)",
       "Bash(bun add *)",
       "Bash(bunx tsc *)",
-      "Bash(bun install *)"
+      "Bash(bun install *)",
+      "Bash(bun db:generate)"
     ]
   }
 }

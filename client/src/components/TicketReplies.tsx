@@ -31,6 +31,20 @@ export default function TicketReplies({ ticket }: { ticket: Ticket }) {
     },
   })
 
+  const polishMutation = useMutation({
+    mutationFn: async (body: string) => {
+      const res = await axios.post<{ body: string }>(
+        `/api/tickets/${ticketId}/polish-reply`,
+        { body },
+        { withCredentials: true },
+      )
+      return res.data.body
+    },
+    onSuccess: (polishedBody) => {
+      form.setValue('body', polishedBody, { shouldValidate: true })
+    },
+  })
+
   return (
     <div className="border-t pt-6">
       <h2 className="text-sm font-semibold text-gray-700 mb-4">
@@ -80,9 +94,20 @@ export default function TicketReplies({ ticket }: { ticket: Ticket }) {
               </FormItem>
             )}
           />
-          <Button type="submit" size="sm" disabled={mutation.isPending}>
-            {mutation.isPending ? 'Sending…' : 'Send reply'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={polishMutation.isPending || !form.watch('body').trim()}
+              onClick={() => polishMutation.mutate(form.getValues('body'))}
+            >
+              {polishMutation.isPending ? 'Polishing…' : 'Polish'}
+            </Button>
+            <Button type="submit" size="sm" disabled={mutation.isPending}>
+              {mutation.isPending ? 'Sending…' : 'Send reply'}
+            </Button>
+          </div>
         </form>
       </Form>
     </div>
