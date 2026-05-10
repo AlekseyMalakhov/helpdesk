@@ -1,6 +1,7 @@
 import { Router } from "express";
 import prisma from "../prisma/client";
 import { inboundEmailSchema } from "@helpdesk/core";
+import { classifyTicket } from "../lib/classify-ticket";
 
 const router = Router();
 
@@ -26,6 +27,7 @@ router.post("/inbound-email", async (req, res) => {
   });
 
   res.status(201).json({ id: ticket.id });
+  classifyTicket(ticket);
 });
 
 export default router;
