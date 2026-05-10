@@ -164,6 +164,44 @@ router.post("/:id/polish-reply", requireAuth, async (req, res) => {
   res.json({ body: text });
 });
 
+router.post("/:id/summarize", requireAuth, async (req, res) => {
+  const id = parseTicketId(req.params);
+  if (id === null) {
+    res.status(400).json({ error: "Invalid ticket id" });
+    return;
+  }
+
+  const ticket = await prisma.ticket.findUnique({
+    where: { id },
+    include: { replies: { orderBy: { createdAt: "asc" } } },
+  });
+  if (!ticket) {
+    res.status(404).json({ error: "Ticket not found" });
+    return;
+  }
+
+  const parts = [
+    `Original message from ${ticket.senderName}:\n${ticket.body}`,
+    ...ticket.replies.map(
+      (r) => `${r.senderType === "agent" ? "Agent" : "Customer"} reply:\n${r.body}`
+    ),
+  ];
+
+  const { text } = await generateText({
+    model: openai("gpt-5-nano"),
+    system:
+      "You are a concise customer support assistant. Summarize the following support ticket conversation in 2-4 sentences, covering the main issue, any steps taken, and the current resolution status. Return only the summary with no additional commentary.",
+    prompt: parts.join("\n\n"),
+  });
+
+  const updated = await prisma.ticket.update({
+    where: { id },
+    data: { aiSummary: text },
+  });
+
+  res.json({ summary: updated.aiSummary });
+});
+
 router.post("/:id/replies", requireAuth, async (req, res) => {
   const id = parseTicketId(req.params);
   if (id === null) {
