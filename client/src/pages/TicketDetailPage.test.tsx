@@ -111,17 +111,12 @@ describe('TicketDetailPage — replies display', () => {
 })
 
 describe('TicketDetailPage — reply form', () => {
-  it('does not POST when submitting an empty reply and shows a validation error', async () => {
+  it('Send reply button is disabled when the textarea is empty', async () => {
     setupGetMocks()
-    mockedAxios.post = vi.fn()
-    const user = userEvent.setup()
     renderPage()
     await waitFor(() => screen.getByText('Test ticket'))
 
-    await user.click(screen.getByRole('button', { name: 'Send reply' }))
-
-    expect(mockedAxios.post).not.toHaveBeenCalled()
-    expect(await screen.findByText('Reply cannot be empty.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Send reply' })).toBeDisabled()
   })
 
   it('POSTs to /api/tickets/:id/replies with the reply body', async () => {
