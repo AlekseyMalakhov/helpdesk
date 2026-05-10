@@ -4,6 +4,8 @@ import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
+import boss from "./lib/boss";
+import { registerWorkers } from "./lib/workers";
 import usersRouter from "./routes/users";
 import ticketsRouter from "./routes/tickets";
 import inboundEmailRouter from "./routes/inbound-email";
@@ -57,3 +59,5 @@ app.use("/api/webhooks", inboundEmailRouter);
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+boss.start().then(() => registerWorkers());

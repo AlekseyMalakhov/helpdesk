@@ -26,8 +26,8 @@ router.post("/inbound-email", async (req, res) => {
     data: { subject, body, senderEmail, senderName },
   });
 
+  await classifyTicket(ticket);
   res.status(201).json({ id: ticket.id });
-  classifyTicket(ticket);
 });
 
 export default router;
