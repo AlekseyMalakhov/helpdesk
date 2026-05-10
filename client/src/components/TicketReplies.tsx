@@ -104,7 +104,7 @@ export default function TicketReplies({ ticket }: { ticket: Ticket }) {
             >
               {polishMutation.isPending ? 'Polishing…' : 'Polish'}
             </Button>
-            <Button type="submit" size="sm" disabled={mutation.isPending}>
+            <Button type="submit" size="sm" disabled={mutation.isPending || !form.watch('body').trim()}>
               {mutation.isPending ? 'Sending…' : 'Send reply'}
             </Button>
           </div>

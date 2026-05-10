@@ -147,10 +147,17 @@ router.post("/:id/polish-reply", requireAuth, async (req, res) => {
     return;
   }
 
+  const ticket = await prisma.ticket.findUnique({ where: { id }, select: { senderName: true } });
+  if (!ticket) {
+    res.status(404).json({ error: "Ticket not found" });
+    return;
+  }
+
+  const agent = res.locals.session.user;
   const { text } = await generateText({
     model: openai("gpt-5-nano"),
     system:
-      "You are a professional customer support writing assistant. Improve the following agent reply to be clearer, more professional, and more helpful while preserving the original intent. Return only the improved reply text with no additional commentary.",
+      `You are a professional customer support writing assistant. Improve the following agent reply to be clearer, more professional, and more helpful while preserving the original intent. Address the customer by their name "${ticket.senderName}". Sign the reply with the agent's name "${agent.name}" and email "${agent.email}". Return only the improved reply text with no additional commentary.`,
     prompt: result.data.body,
   });
 
