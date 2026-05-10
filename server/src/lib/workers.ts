@@ -3,6 +3,7 @@ import { openai } from "@ai-sdk/openai";
 import prisma from "../prisma/client";
 import boss from "./boss";
 import { CLASSIFY_TICKET_QUEUE, type ClassifyTicketData } from "./classify-ticket";
+import { autoResolveTicket } from "./auto-resolve-ticket";
 
 const CATEGORIES = ["general_question", "technical_question", "refund_request"] as const;
 type Category = (typeof CATEGORIES)[number];
@@ -31,6 +32,11 @@ Body: ${body}`,
     const category = text.trim() as Category;
     if (CATEGORIES.includes(category)) {
       await prisma.ticket.update({ where: { id }, data: { category } });
+    }
+
+    const ticket = await prisma.ticket.findUnique({ where: { id }, select: { senderName: true } });
+    if (ticket) {
+      await autoResolveTicket({ id, subject, body, senderName: ticket.senderName });
     }
   });
 }

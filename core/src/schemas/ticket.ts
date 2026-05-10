@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-export const ticketStatusSchema = z.enum(["open", "resolved", "closed"]);
+export const ticketStatusSchema = z.enum(["processing", "open", "resolved", "closed"]);
+export const agentTicketStatusSchema = z.enum(["open", "resolved", "closed"]);
 export const ticketCategorySchema = z.enum([
   "general_question",
   "technical_question",
@@ -15,7 +16,7 @@ export const inboundEmailSchema = z.object({
 });
 
 export const updateTicketSchema = z.object({
-  status: ticketStatusSchema.optional(),
+  status: agentTicketStatusSchema.optional(),
   category: ticketCategorySchema.optional(),
   assignedAgentId: z.string().nullable().optional(),
 });

@@ -13,6 +13,7 @@ enum Role {
 }
 
 enum TicketStatus {
+  processing
   open
   resolved
   closed
@@ -58,6 +59,7 @@ model Ticket {
   assignedAgentId String?
   assignedAgent   User?           @relation(fields: [assignedAgentId], references: [id])
   aiSummary       String?
+  resolvedByAi    Boolean         @default(false)
   replies         Reply[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt

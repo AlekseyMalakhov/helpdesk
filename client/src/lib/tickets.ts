@@ -1,6 +1,7 @@
 import type { TicketStatus, TicketCategory } from '@helpdesk/core'
 
 export const statusVariant: Record<TicketStatus, 'default' | 'secondary' | 'outline'> = {
+  processing: 'outline',
   open: 'default',
   resolved: 'secondary',
   closed: 'outline',

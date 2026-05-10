@@ -40,7 +40,7 @@ router.get("/", requireAuth, async (req, res) => {
     : "createdAt";
   const dir: "asc" | "desc" = sortOrder === "asc" ? "asc" : "desc";
 
-  const where: Prisma.TicketWhereInput = {};
+  const where: Prisma.TicketWhereInput = { status: { not: "processing" } };
 
   const statusParsed = ticketStatusSchema.safeParse(status);
   if (statusParsed.success) where.status = statusParsed.data;

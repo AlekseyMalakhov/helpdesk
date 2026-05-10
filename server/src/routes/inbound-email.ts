@@ -23,7 +23,7 @@ router.post("/inbound-email", async (req, res) => {
   const { subject, body, senderEmail, senderName } = result.data;
 
   const ticket = await prisma.ticket.create({
-    data: { subject, body, senderEmail, senderName },
+    data: { subject, body, senderEmail, senderName, status: "processing" },
   });
 
   await classifyTicket(ticket);

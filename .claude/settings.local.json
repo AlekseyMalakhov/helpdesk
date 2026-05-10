@@ -14,7 +14,9 @@
       "Bash(bun add *)",
       "Bash(bunx tsc *)",
       "Bash(bun install *)",
-      "Bash(bun db:generate)"
+      "Bash(bun db:generate)",
+      "Bash(Get-ChildItem -Path \"E:\\\\Alexs docs\\\\Programming\\\\helpdesk\" -Directory)",
+      "Bash(Select-Object -ExpandProperty Name)"
     ]
   }
 }
